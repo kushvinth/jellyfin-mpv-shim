@@ -26,15 +26,6 @@ log = logging.getLogger("player")
 mpv_log = logging.getLogger("mpv")
 
 
-discord_presence = False
-if settings.discord_presence:
-    try:
-        from .rich_presence import register_join_event, send_presence, clear_presence
-
-        discord_presence = True
-    except Exception:
-        log.error("Could not enable Discord Rich Presence.", exc_info=True)
-
 python_mpv_available = True
 is_using_ext_mpv = False
 if not settings.mpv_ext:
@@ -242,12 +233,6 @@ class PlayerManager(object):
 
         self.menu = OSDMenu(self, self._player)
         self.syncplay = SyncPlayManager(self)
-
-        if discord_presence:
-            try:
-                register_join_event(self.syncplay.discord_join_group)
-            except Exception:
-                log.error("Could not register Discord join callback.", exc_info=True)
 
         if hasattr(self._player, "osc"):
             # Ensure the built-in OSC is disabled when using trickplay-osc,
@@ -1142,32 +1127,6 @@ class PlayerManager(object):
                     ),
                 }
             ]
-        if discord_presence:
-            try:
-                if (
-                    self._video.is_tv
-                    and self._video.item.get("IndexNumber") is not None
-                    and self._video.item.get("ParentIndexNumber") is not None
-                ):
-                    title = self._video.item.get("SeriesName")
-                    subtitle = _("Season {0} - Episode {1}").format(
-                        self._video.item.get("ParentIndexNumber"),
-                        self._video.item.get("IndexNumber"),
-                    )
-                else:
-                    title = self._video.item.get("Name")
-                    subtitle = str(self._video.item.get("ProductionYear", ""))
-                send_presence(
-                    title,
-                    subtitle,
-                    playback_time,
-                    duration,
-                    not pause,
-                    self.syncplay.current_group,
-                    self._video.item.get("Type"),
-                )
-            except Exception:
-                log.error("Could not send Discord Rich Presence.", exc_info=True)
         return options
 
     @synchronous("_tl_lock")
@@ -1208,12 +1167,6 @@ class PlayerManager(object):
 
         if self.get_webview() is not None and settings.display_mirroring:
             self.get_webview().show()
-
-        if discord_presence:
-            try:
-                clear_presence()
-            except Exception:
-                log.error("Could not clear Discord Rich Presence.", exc_info=True)
 
     def upd_player_hide(self):
         if self._video:

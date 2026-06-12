@@ -90,6 +90,7 @@ def main():
     from .action_thread import actionThread
     from .event_handler import eventHandler
     from .timeline import timelineManager
+    from .discord_presence_manager import DiscordPresenceManager
 
     clientManager.callback = eventHandler.handle_event
     timelineManager.start()
@@ -99,6 +100,15 @@ def main():
     playerManager.get_webview = get_webview
     user_interface.open_player_menu = playerManager.menu.show_menu
     eventHandler.mirror = mirror
+
+    discord_manager = None
+    if settings.discord_presence:
+        try:
+            discord_manager = DiscordPresenceManager(clientManager)
+            discord_manager.start()
+        except Exception:
+            log.warning("Could not start Discord Presence Manager.", exc_info=True)
+
     user_interface.start()
     user_interface.login_servers()
 
@@ -123,6 +133,8 @@ def main():
                 print("")
                 log.info("Stopping services...")
     finally:
+        if discord_manager:
+            discord_manager.stop()
         playerManager.terminate()
         timelineManager.stop()
         actionThread.stop()

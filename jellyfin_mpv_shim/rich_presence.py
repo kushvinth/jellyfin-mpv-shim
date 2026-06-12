@@ -38,6 +38,8 @@ def send_presence(
     syncplay_group: str = None,
     media_type: str = None,
 ):
+    global RPC
+    
     if not _ensure_connected():
         return
 
